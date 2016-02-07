@@ -112,15 +112,16 @@ def make_classic_recs(stream, rec_limit=10):
             topn = filter(lambda e: e.doi != paper.doi, candidates[:rec_limit+1])
             yield map(lambda r: ClassicRec(paper.doi, r.doi, r.score), topn[:rec_limit])
 
-def skip_comment(fs):
-    i_pos = fs.tell()
-    char = fs.read(1)
-    if char == '#':
-        fs.readline()
-        return True
-    else:
-        fs.seek(i_pos)
-        return False
+def skip_comments(fs):
+    check_comment = True
+    while check_comment:
+        i_pos = fs.tell()
+        char = fs.read(1)
+        if char == '#':
+            fs.readline()
+        else:
+            fs.seek(i_pos)
+            check_comment = False
 
 if __name__ == "__main__":
     import argparse
@@ -133,7 +134,8 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--limit', type=int, help="Max number of recommendations to generate per-paper", default=10)
     args = parser.parse_args()
 
-    skip_comment(args.infile)
+    skip_comments(args.infile)
+    # imap doesn't exist in python3
     reader = itertools.imap(lambda s: s.split(' '), args.infile)
     record_reader = itertools.imap(make_tree_rec, reader)
     for recs in make_expert_rec(record_reader, args.limit, args.toint):
@@ -145,7 +147,7 @@ if __name__ == "__main__":
             args.expert.write(rec.to_flat())
 
     args.infile.seek(0)
-    skip_comment(args.infile)
+    skip_comments(args.infile)
     reader = itertools.imap(lambda s: s.split(' '), args.infile)
     record_reader = itertools.imap(make_tree_rec, reader)
     for recs in make_classic_recs(record_reader, args.limit):
