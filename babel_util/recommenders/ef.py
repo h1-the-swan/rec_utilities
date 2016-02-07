@@ -2,6 +2,7 @@
 """Implements classic and expert EigenFactor recommendations"""
 import itertools
 
+
 class TreeRecord(object):
     __slots__ = ("doi", "local", "score", "parent")
     def __init__(self, cluster, doi, score):
@@ -32,6 +33,7 @@ class TreeRecord(object):
     def __ne__(self, other):
         return not self == other
 
+
 class Recommendation(object):
     rec_type = None
     __slots__ = ("target_doi", "doi", "score")
@@ -50,8 +52,10 @@ class Recommendation(object):
     def __repr__(self):
         return "<%s,%s,%s,%s>" % (self.target_doi, self.rec_type, self.doi, self.score)
 
+
 class ClassicRec(Recommendation):
     rec_type = "classic"
+
 
 class ExpertRec(Recommendation):
     rec_type = "expert"
@@ -69,6 +73,7 @@ def get_score(e):
 def make_tree_rec(entry):
     """Transforms a raw entry to a TreeRecord"""
     return TreeRecord(entry[0], entry[2], entry[1])
+
 
 def make_expert_rec(stream, rec_limit=10, to_int=False):
     """Given a stream of TreeRecord, generate ExpertRecs.
@@ -91,6 +96,7 @@ def make_expert_rec(stream, rec_limit=10, to_int=False):
             topn = filter(lambda e: e.doi != paper.doi, candidates[:rec_limit+1])
             yield map(lambda r: ExpertRec(paper.doi, r.doi, r.score), topn[:rec_limit])
 
+
 def make_classic_recs(stream, rec_limit=10):
     """Given a stream of TreeRecord, generate ClassicRecs.
 
@@ -112,11 +118,38 @@ def make_classic_recs(stream, rec_limit=10):
             topn = filter(lambda e: e.doi != paper.doi, candidates[:rec_limit+1])
             yield map(lambda r: ClassicRec(paper.doi, r.doi, r.score), topn[:rec_limit])
 
+
 def skip_comments(fs):
     char = fs.read(1)
     while char == '#':
         fs.readline()
         char = fs.read(1)
+
+
+def main(infile, classic, expert, toint=False, numRecs=10):
+    skip_comments(infile)
+    reader = itertools.imap(lambda s: s.split(' '), infile)
+    record_reader = itertools.imap(make_tree_rec, reader)
+    for recs in make_expert_rec(record_reader, numRecs, toint):
+        score = len(recs)
+        for rec in recs:
+            if toint:
+                rec.score = score
+                score -= 1
+            expert.write(rec.to_flat())
+
+    infile.seek(0)
+    skip_comments(infile)
+    reader = itertools.imap(lambda s: s.split(' '), infile)
+    record_reader = itertools.imap(make_tree_rec, reader)
+    for recs in make_classic_recs(record_reader, numRecs):
+        score = len(recs)
+        for rec in recs:
+            if toint:
+                rec.score = score
+                score -= 1
+            classic.write(rec.to_flat())
+
 
 
 if __name__ == "__main__":
@@ -130,26 +163,4 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--limit', type=int, help="Max number of recommendations to generate per-paper", default=10)
     args = parser.parse_args()
 
-    skip_comments(args.infile)
-    # imap doesn't exist in python3
-    reader = itertools.imap(lambda s: s.split(' '), args.infile)
-    record_reader = itertools.imap(make_tree_rec, reader)
-    for recs in make_expert_rec(record_reader, args.limit, args.toint):
-        score = len(recs)
-        for rec in recs:
-            if args.toint:
-                rec.score = score
-                score -= 1
-            args.expert.write(rec.to_flat())
-
-    args.infile.seek(0)
-    skip_comments(args.infile)
-    reader = itertools.imap(lambda s: s.split(' '), args.infile)
-    record_reader = itertools.imap(make_tree_rec, reader)
-    for recs in make_classic_recs(record_reader, args.limit):
-        score = len(recs)
-        for rec in recs:
-            if args.toint:
-                rec.score = score
-                score -= 1
-            args.classic.write(rec.to_flat())
+    main(args.infile, args.classic, args.expert, args.toint, args.limit)
