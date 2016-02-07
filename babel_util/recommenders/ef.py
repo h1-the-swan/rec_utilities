@@ -113,15 +113,11 @@ def make_classic_recs(stream, rec_limit=10):
             yield map(lambda r: ClassicRec(paper.doi, r.doi, r.score), topn[:rec_limit])
 
 def skip_comments(fs):
-    check_comment = True
-    while check_comment:
-        i_pos = fs.tell()
+    char = fs.read(1)
+    while char == '#':
+        fs.readline()
         char = fs.read(1)
-        if char == '#':
-            fs.readline()
-        else:
-            fs.seek(i_pos)
-            check_comment = False
+
 
 if __name__ == "__main__":
     import argparse
