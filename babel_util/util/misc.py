@@ -3,11 +3,38 @@ import io
 import os
 import psutil
 from datetime import datetime
-
+import time
 
 def get_memory_usage():
     process = psutil.Process(os.getpid())
     return process.memory_info()[0] / float(2 ** 20)
+
+class Benchmark(object):
+    def __init__(self, frequency=100000):
+        self._start = time.time()
+        self._last_time = self._start
+        self.count = 0
+        self._last_count = self.count
+        self.frequency = frequency
+
+    def increment(self, amount=1):
+        self.count += amount
+        if self.count % self.frequency == 0:
+            self.print_freq()
+
+    def print_freq(self):
+        new_window = time.time()
+        global_delta = new_window - self._start
+        count_delta = self.count - self._last_count
+        time_delta = new_window - self._last_time
+        print("[+{:.2f}s {:,}]\twindow: {:.2f} e/s\ttotal: {:.2f} e/s".format(global_delta,
+                                                                           self.count,
+                                                                           count_delta/time_delta,
+                                                                           self.count/global_delta))
+
+        self._last_time = new_window
+        self._last_count = self.count
+
 
 
 class Checkpoint:
@@ -60,3 +87,14 @@ def open_file(filename, mode="r", encoding=None):
     else:
         f = open(filename, mode)
     return f
+
+def encode_datetime(obj):
+    if isinstance(obj, datetime):
+        return {'__datetime__': True, 'as_str': obj.isoformat()}
+    return obj
+
+#TODO: Implement, probably using dateparse since Python cant reade isoformat dates for some reason...
+#def decode_datetime(obj):
+#    if b'__datetime__' in obj:
+#        obj = datetime.datetime.strptime(obj["as_str"], "%Y%m%dT%H:%M:%S.%f")
+#    return obj
