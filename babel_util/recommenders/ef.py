@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Implements classic and expert EigenFactor recommendations"""
 import itertools
-from parsers.tree import TreeFile
+from babel_util.parsers.tree import TreeFile
 
 
 class Recommendation(object):
@@ -31,8 +31,6 @@ class ExpertRec(Recommendation):
     rec_type = "expert"
 
 
-
-
 def require_local(e):
     return e.local is not None
 
@@ -51,11 +49,10 @@ def get_score(e):
 
 def make_expert_rec(stream, rec_limit=10):
     """Given a stream of TreeRecord, generate ExpertRecs.
-
     Args:
         stream: A stream of TreeRecords, sorted by cluster_id (1:1:1, 1:1:2)
         rec_limit: The number of recommendations to generate per-paper. Default 10.
-        
+
     Returns:
         A generator returning a sorted list of ExpertRecs."""
     filtered_stream = filter(require_local, stream)  # TODO: I haven't convinced myself that this isn't necessary
@@ -72,14 +69,12 @@ def make_expert_rec(stream, rec_limit=10):
                 yield res
 
 
-
 def make_classic_recs(stream, rec_limit=10):
     """Given a stream of TreeRecord, generate ClassicRecs.
-
     Args:
         stream: A stream of TreeRecords, sorted by cluster_id (1:1:1, 1:1:2)
         rec_limit: The number of recommendations to generate per-paper. Default 10.
-        
+
     Returns:
         A generator returning a sorted list of ClassicRecs."""
     filtered_stream = filter(require_local, stream)
@@ -95,6 +90,28 @@ def make_classic_recs(stream, rec_limit=10):
             if len(res):
                 yield res
 
+
+def main(infile, classic, expert, toint=False, numRecs=10):
+    tf = TreeFile(infile)
+    for recs in make_expert_rec(tf, numRecs):
+        score = len(recs)
+        for rec in recs:
+            if toint:
+                rec.score = score
+                score -= 1
+            expert.write(rec.to_flat())
+
+    infile.seek(0)
+    tf = TreeFile(infile)
+    for recs in make_classic_recs(tf, numRecs):
+        score = len(recs)
+        for rec in recs:
+            if toint:
+                rec.score = score
+                score -= 1
+            classic.write(rec.to_flat())
+
+
 if __name__ == "__main__":
     import argparse
     import sys
@@ -106,21 +123,6 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--limit', type=int, help="Max number of recommendations to generate per-paper", default=10)
     args = parser.parse_args()
 
-    tf = TreeFile(args.infile)
-    for recs in make_expert_rec(tf, args.limit, args.toint):
-        score = len(recs)
-        for rec in recs:
-            if args.toint:
-                rec.score = score
-                score -= 1
-            args.expert.write(rec.to_flat())
+    main(args.infile, args.classic, args.expert, args.toint, args.limit)
 
-    args.infile.seek(0)
-    tf = TreeFile(args.infile)
-    for recs in make_classic_recs(tf, args.limit):
-        score = len(recs)
-        for rec in recs:
-            if args.toint:
-                rec.score = score
-                score -= 1
-            args.classic.write(rec.to_flat())
+
