@@ -69,7 +69,6 @@ def make_expert_rec(stream, rec_limit=10):
                 yield res
 
 
-
 def make_classic_recs(stream, rec_limit=10):
     """Given a stream of TreeRecord, generate ClassicRecs.
     Args:
@@ -94,7 +93,7 @@ def make_classic_recs(stream, rec_limit=10):
 
 def main(infile, classic, expert, toint=False, numRecs=10):
     tf = TreeFile(infile)
-    for recs in make_expert_rec(tf, numRecs, toint):
+    for recs in make_expert_rec(tf, numRecs):
         score = len(recs)
         for rec in recs:
             if toint:
