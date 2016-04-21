@@ -66,6 +66,24 @@ def parse_citations(x):
     md["citations"].append(e.text)
 
 
+def parse_heading(x):
+    e, md = x
+    md["heading"] = e.text
+
+
+def parse_subheading(x):
+    e, md = x
+    md["subheading"] = e.text
+
+
+def parse_subject(x):
+    e, md = x
+    if e.attrib["ascatype"] == "extended":
+        if "subject" not in md:
+            md["subject"] = []
+        md["subject"].append(e.text)
+
+
 def is_wos(entry_id):
     return entry_id[:4] == "WOS:"
 
@@ -89,6 +107,9 @@ SD = "records/REC/static_data/"
 SDS = SD + "summary/"
 PARSERS = {"records/REC/UID": parse_id,
            "records/REC/dynamic_data/cluster_related/identifiers/identifier": parse_doi,
+           SD + "fullrecord_metadata/category_info/headings/heading": parse_heading,
+           SD + "fullrecord_metadata/category_info/subheadings/subheading": parse_subheading,
+           SD + "fullrecord_metadata/category_info/subjects/subject": parse_subject,
            SDS + "titles/title": parse_title,
            SDS + "pub_info": parse_pubinfo,
            SDS + "names/name/wos_standard": parse_authors,
