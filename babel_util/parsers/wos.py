@@ -2,6 +2,7 @@
 import xml.etree.ElementTree as ET
 from xml.sax import ContentHandler
 from random import uniform
+from functools import partial
 import datetime
 
 WOS_NS = "http://scientific.thomsonreuters.com/schema/wok5.4/public/FullRecord"
@@ -44,21 +45,6 @@ def parse_abstract(x):
     md["abstract"] = e.text
 
 
-def parse_keywords(x):
-    e, md = x
-    if "keywords" not in md:
-        md["keywords"] = []
-    md["keywords"].append(e.text)
-
-
-def parse_authors(x):
-    e, md = x
-    if "authors" not in md:
-        md["authors"] = []
-    if e.text:  # TODO: Temp fix for <wos_standard /> entities
-        md["authors"].append(e.text)
-
-
 def parse_citations(x):
     e, md = x
     if "citations" not in md:
@@ -66,22 +52,13 @@ def parse_citations(x):
     md["citations"].append(e.text)
 
 
-def parse_heading(x):
+def parse_list_field(field_name, filter_fn, x):
     e, md = x
-    md["heading"] = e.text
-
-
-def parse_subheading(x):
-    e, md = x
-    md["subheading"] = e.text
-
-
-def parse_subject(x):
-    e, md = x
-    if e.attrib["ascatype"] == "extended":
-        if "subject" not in md:
-            md["subject"] = []
-        md["subject"].append(e.text)
+    if filter_fn and not filter_fn(e):
+        return
+    if field_name not in md:
+        md[field_name] = []
+    md[field_name].append(e.text)
 
 
 def is_wos(entry_id):
@@ -107,15 +84,21 @@ SD = "records/REC/static_data/"
 SDS = SD + "summary/"
 PARSERS = {"records/REC/UID": parse_id,
            "records/REC/dynamic_data/cluster_related/identifiers/identifier": parse_doi,
-           SD + "fullrecord_metadata/category_info/headings/heading": parse_heading,
-           SD + "fullrecord_metadata/category_info/subheadings/subheading": parse_subheading,
-           SD + "fullrecord_metadata/category_info/subjects/subject": parse_subject,
+           SD + "fullrecord_metadata/category_info/headings/heading": partial(parse_list_field,
+                                                                              "heading",
+                                                                              None),
+           SD + "fullrecord_metadata/category_info/subheadings/subheading": partial(parse_list_field,
+                                                                                    "subheading",
+                                                                                    None),
+           SD + "fullrecord_metadata/category_info/subjects/subject": partial(parse_list_field,
+                                                                              "subject",
+                                                                              lambda e: e.attrib["ascatype"] == "extended"),
            SDS + "titles/title": parse_title,
            SDS + "pub_info": parse_pubinfo,
-           SDS + "names/name/wos_standard": parse_authors,
-           SD + "fullrecord_metadata/references/reference/uid": parse_citations,
+           SDS + "names/name/wos_standard": partial(parse_list_field, "authors", lambda e: e.text),  #TODO: Temp fix for <wos_standard /> entities
+           SD + "fullrecord_metadata/references/reference/uid": partial(parse_list_field, "citations", None),
            #SD + "fullrecord_metadata/abstracts/abstract/abstract_text/p": parse_abstract,
-           SD + "item/keywords_plus/keyword": parse_keywords}
+           SD + "item/keywords_plus/keyword": partial(parse_list_field, "keywords", None)}
 
 
 def stub_md():

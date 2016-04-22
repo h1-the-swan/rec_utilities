@@ -16,8 +16,8 @@ SMALL_PARSED = {'id': "WOS:000334657000026",
                 'abstract': None,
                 'keywords': [],
                 'subject': ['Neurosciences & Neurology'],
-                'heading': 'Science & Technology',
-                'subheading': 'Life Sciences & Biomedicine',
+                'heading': ['Science & Technology'],
+                'subheading': ['Life Sciences & Biomedicine'],
                 'citations': ['WOS:000334657000026.1']}
 
 MEDIUM_XML = "test_medium.xml"
