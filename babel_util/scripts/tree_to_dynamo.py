@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 from storage.dynamo import Table, TABLE_DEFINITION, DATASETS
-from contextlib import closing
+from util.misc import Benchmark
 import itertools
 from decimal import Decimal
 import boto3
@@ -64,11 +64,9 @@ if __name__ == '__main__':
         if not args.dryrun:
             t.create(write=2000)
 
-    entries = 0
-    start = time.time()
-
     parser = TreeFile(args.tree)
 
+    b = Benchmark()
     with t.get_batch_put_context() as batch:
         print("Generating expert recommendations...")
         for expert_rec in process_record_stream(make_expert_rec(parser)):
@@ -76,12 +74,7 @@ if __name__ == '__main__':
                 print(expert_rec)
             if not args.dryrun:
                 batch.put_item(expert_rec)
-            entries += 1
-            if entries % 50000 == 0:
-                current_time = time.time()
-                current_rate = entries/(current_time - start)
-                print("\nProcessed {0:,} entries in {1:.0f} seconds: {2:.2f} entries/sec".format(entries, time.time()-start, entries/(time.time()-start)))
-                sys.stdout.flush()
+            b.increment()
 
         # Reset for the second pass
         print("Generating classic recommendations...")
@@ -92,14 +85,9 @@ if __name__ == '__main__':
                 print(classic_rec)
             if not args.dryrun:
                 batch.put_item(classic_rec)
-            entries += 1
-            if entries % 50000 == 0:
-                current_time = time.time()
-                current_rate = entries/(current_time - start)
-                print("\nProcessed {0:,} entries in {1:.0f} seconds: {2:.2f} entries/sec".format(entries, time.time()-start, entries/(time.time()-start)))
-                sys.stdout.flush()
-    end = time.time()
-    print("\nProcessed {0:,} entries in {1:.0f} seconds: {2:.2f} entries/sec".format(entries, end-start, entries/(end-start)))
+            b.increment()
+
+    b.print_freq()
 
     if not args.dryrun:
         t.update_throughput()
