@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Implements classic and expert EigenFactor recommendations"""
 import itertools
-from babel_util.parsers.tree import TreeFile
+from parsers.tree import TreeFile
 
 
 class Recommendation(object):
