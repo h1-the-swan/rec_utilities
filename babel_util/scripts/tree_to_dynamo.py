@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    logging.info("Appending -beta to table name to comply with Babel expectations.")
-    args.dataset + "-beta"
+    args.dataset + "_beta"
+    logging.warning("Appending _beta to table name to comply with Babel expectations. " + args.dataset)
 
     if args.region == "localhost":
         client = boto3.resource('dynamodb', endpoint_url="http://localhost:8000")
