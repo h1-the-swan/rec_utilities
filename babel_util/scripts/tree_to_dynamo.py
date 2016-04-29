@@ -69,15 +69,15 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    args.dataset + "_beta"
-    logging.warning("Appending _beta to table name to comply with Babel expectations. " + args.dataset)
+    table_name = args.dataset + "_beta"
+    logging.warning("Appending _beta to table name to comply with Babel expectations. " + table_name)
 
     if args.region == "localhost":
         client = boto3.resource('dynamodb', endpoint_url="http://localhost:8000")
     else:
         client = boto3.resource('dynamodb')
 
-    t = Table(client, args.dataset)
+    t = Table(client, table_name)
 
     if args.flush:
         logging.info("Deleting table: " + t.table_name)
