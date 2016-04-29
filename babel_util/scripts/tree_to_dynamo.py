@@ -32,12 +32,34 @@ def debucketer(key, value):
             TABLE_DEFINITION["range_key"]: Decimal(ef),
             TABLE_DEFINITION["rec_attribute"]: value}
 
+def make_classic(args, b, t):
+    with t.get_batch_put_context() as batch:
+        args.tree.seek(0)
+        parser = TreeFile(args.tree)
+        for classic_rec in process_record_stream(make_classic_recs(parser)):
+            if args.verbose:
+                print(classic_rec)
+            if not args.dryrun:
+                batch.put_item(classic_rec)
+            b.increment()
+
+def make_expert(args, b, t):
+    with t.get_batch_put_context() as batch:
+        args.tree.seek(0)
+        parser = TreeFile(args.tree)
+        for expert_rec in process_record_stream(make_expert_rec(parser)):
+            if args.verbose:
+                print(expert_rec)
+            if not args.dryrun:
+                batch.put_item(expert_rec)
+            b.increment()
+
 if __name__ == '__main__':
     import argparse
-    import sys
 
     parser = argparse.ArgumentParser(description="Transform recommender output to DynamoDB")
     parser.add_argument("dataset", help="Dataset", choices=DATASETS)
+    parser.add_argument("--rec_type", help="Only generate recommendations of this type", choices=["classic", "expert"])
     parser.add_argument("tree", help="file to transform", type=argparse.FileType('r'))
     parser.add_argument("--region", help="Region to connect to", default="us-east-1")
     parser.add_argument("-c", "--create", help="create table in database", action="store_true")
@@ -46,6 +68,9 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--verbose", action="store_true")
 
     args = parser.parse_args()
+
+    if not args.dataset.endswith("beta"):
+        raise ValueError("Dataset name must end in -beta for the rest of Babel to work")
 
     if args.region == "localhost":
         client = boto3.resource('dynamodb', endpoint_url="http://localhost:8000")
@@ -64,29 +89,15 @@ if __name__ == '__main__':
         if not args.dryrun:
             t.create(write=2000)
 
-    parser = TreeFile(args.tree)
-
     b = Benchmark()
-    with t.get_batch_put_context() as batch:
-        print("Generating expert recommendations...")
-        for expert_rec in process_record_stream(make_expert_rec(parser)):
-            if args.verbose:
-                print(expert_rec)
-            if not args.dryrun:
-                batch.put_item(expert_rec)
-            b.increment()
-
-        # Reset for the second pass
-        print("Generating classic recommendations...")
-        args.tree.seek(0)
-        parser = TreeFile(args.tree)
-        for classic_rec in process_record_stream(make_classic_recs(parser)):
-            if args.verbose:
-                print(classic_rec)
-            if not args.dryrun:
-                batch.put_item(classic_rec)
-            b.increment()
-
+    if args.rec_type:
+        if args.rec_type == "classic":
+            make_classic(args, b, t)
+        else:
+            make_expert(args, b, t)
+    else:
+        make_classic(args, b, t)
+        make_expert(args, b, t)
     b.print_freq()
 
     if not args.dryrun:
