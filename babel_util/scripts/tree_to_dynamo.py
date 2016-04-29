@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if not args.dataset.endswith("beta"):
-        raise ValueError("Dataset name must end in -beta for the rest of Babel to work")
+    logging.info("Appending -beta to table name to comply with Babel expectations.")
+    args.dataset + "-beta"
 
     if args.region == "localhost":
         client = boto3.resource('dynamodb', endpoint_url="http://localhost:8000")
