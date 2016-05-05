@@ -22,7 +22,7 @@ if __name__ == "__main__":
                 entry = ujson.loads(line)
                 b.increment()
 
-                if args.subject and args.subject not in entry["subject"]:
+                if arguments.subject and arguments.subject not in entry["subject"]:
                     continue
 
                 for citation in entry["citations"]:
