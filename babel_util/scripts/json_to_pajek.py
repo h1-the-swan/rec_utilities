@@ -9,6 +9,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Creates Pajek (.net) files from JSON")
     parser.add_argument('outfile')
     parser.add_argument('--temp-dir', help="Directory to store temporary files in", default=None)
+    parser.add_argument('--subject', '-s', help="For WoS, subject must include this.")
     parser.add_argument('infile', nargs='+')
     arguments = parser.parse_args()
 
@@ -19,9 +20,13 @@ if __name__ == "__main__":
         with open_file(filename) as f:
             for line in f:
                 entry = ujson.loads(line)
+                b.increment()
+
+                if args.subject and args.subject not in entry["subject"]:
+                    continue
+
                 for citation in entry["citations"]:
                     pjk.add_edge(entry["id"], citation)
-                b.increment()
 
     b.print_freq()
     with open_file(arguments.outfile, "w") as f:
