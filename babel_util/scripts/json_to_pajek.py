@@ -30,7 +30,7 @@ if __name__ == "__main__":
                 if arguments.wos_only and '.' in entry["id"]:
                     continue
 
-                if subjects and not subject.intersection(entry["subject"]):
+                if subjects and not subjects.intersection(entry["subject"]):
                     continue
 
                 for citation in entry["citations"]:
