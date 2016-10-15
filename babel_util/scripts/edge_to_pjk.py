@@ -16,7 +16,7 @@ if __name__ == "__main__":
         with open_file(filename) as f:
             for line in f:
                 v_from, v_to = line.split(arguments.delimiter)
-                pjk.add_edge(v_from, v_to)
+                pjk.add_edge(v_from, v_to.strip())
 
     with open_file(arguments.outfile, 'w') as f:
         pjk.write(f)
