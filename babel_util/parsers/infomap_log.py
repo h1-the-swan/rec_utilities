@@ -71,7 +71,7 @@ class InfomapLog(object):
         return int(self._get_line("==>").split(" ")[5])
 
     def self_links(self):
-        return int(self._get_line("self-links.").split(" ")[3])
+        return int(self._get_line("self-link").split(" ")[3])
 
     def num_levels(self):
         if self._num_levels is None:
