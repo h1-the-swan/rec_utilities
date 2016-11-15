@@ -16,4 +16,4 @@ if __name__ == "__main__":
         
         for entry in p.parse():
             for citation in entry["citations"]:
-                arguments.infile.write("%s\t%s\n" % (entry["id"], citation))
+                arguments.outfile.write("%s\t%s\n" % (entry["id"], citation))
