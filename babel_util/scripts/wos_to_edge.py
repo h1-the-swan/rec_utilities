@@ -11,7 +11,7 @@ if __name__ == "__main__":
     parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
     arguments = parser.parse_args()
 
-    with open_file(parser.infile) as f:
+    with open_file(arguments.infile) as f:
         p = WOSStream(f)
         
         for entry in p.parse():
