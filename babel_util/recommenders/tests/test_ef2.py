@@ -55,4 +55,5 @@ class TestEF2Rec(unittest.TestCase):
     def test_parse_tree(self):
         for rec in parse_tree(self.deep):
             print(rec)
+            print(len(rec[1]))
 
