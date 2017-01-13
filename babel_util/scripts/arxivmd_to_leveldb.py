@@ -15,7 +15,7 @@ if __name__ == "__main__":
     parser.add_argument('--delimiter', '-d', default='\t')
     args = parser.parse_args()
 
-    db = leveldb.LevelDB(args.db_path,
+    db = leveldb.LevelDB(args.leveldb_path,
                          write_buffer_size=100 << 20,  # 100MB
                          block_cache_size=400 << 20)  # 400MB
 
