@@ -40,7 +40,7 @@ if __name__ == "__main__":
             t.create(write=2000)
 
     b = Benchmark(args.benchmark_freq)
-    with open_file(args.infile) as ifs:
+    with open_file(args.metadata) as ifs:
         with t.get_batch_put_context() as batch:
             reader = csv.DictReader(ifs, delimiter=args.delimiter)
             for row in reader:
