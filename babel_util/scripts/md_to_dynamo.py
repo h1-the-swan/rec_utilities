@@ -48,7 +48,7 @@ if __name__ == "__main__":
                     print(row)
                     raise KeyError("Not all required keys present")
                 if not args.dryrun:
-                    batch.put_item(row["paper_id"], row)
+                    batch.put_item(Item=row)
                 b.increment()
 
     if not args.dryrun:
