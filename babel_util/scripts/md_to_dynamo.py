@@ -16,7 +16,7 @@ if __name__ == "__main__":
     parser.add_argument("--region", help="Region to connect to", default="us-east-1")
     parser.add_argument("-c", "--create", help="create table in database", action="store_true")
     parser.add_argument("-f", "--flush", help="flush database.", action="store_true")
-    parser.add_argument("-d", "--dryrun", help="Process data, but don't insert into DB", action="store_true")
+    parser.add_argument("-n", "--dryrun", help="Process data, but don't insert into DB", action="store_true")
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
