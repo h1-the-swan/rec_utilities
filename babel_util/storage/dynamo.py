@@ -71,10 +71,10 @@ class Metadata(Table):
                 'AttributeName': self.hash_key,
                 'AttributeType': 'S'
             }],
-            ProvisionedThroughput=[{
+            ProvisionedThroughput={
                 'ReadCapacityUnits': read,
                 'WriteCapacityUnits': write
-            }]
+            }
         )
         self.table.meta.client.get_waiter('table_exists').wait(TableName=self.table_name)
 
