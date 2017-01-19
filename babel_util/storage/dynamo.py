@@ -61,7 +61,7 @@ class Metadata(Table):
         self.hash_key = "paper_id"
 
     def create(self, read=5, write=5):
-        self.table = self.dynamodb.create_table(
+        self.table = self.connection.create_table(
             TableName=self.table_name,
             KeySchema=[{
                 'AttributeName': self.hash_key,
