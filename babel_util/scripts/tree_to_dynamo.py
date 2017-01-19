@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-from __future__ import print_function
-from storage.dynamo import Table, TABLE_DEFINITION, DATASETS
+from storage.dynamo import Recommendation, TABLE_DEFINITION, DATASETS
 from util.misc import Benchmark
 import itertools
 from decimal import Decimal
 import boto3
-import time
 import logging
 from parsers.tree import TreeFile
 from recommenders.ef import make_expert_rec, make_classic_recs
@@ -77,7 +75,7 @@ if __name__ == '__main__':
     else:
         client = boto3.resource('dynamodb')
 
-    t = Table(client, table_name)
+    t = Recommendation(client, table_name)
 
     if args.flush:
         logging.info("Deleting table: " + t.table_name)

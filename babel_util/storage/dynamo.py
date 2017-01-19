@@ -4,8 +4,10 @@ from botocore.exceptions import ClientError
 TABLE_DEFINITION = {"hash_key": "composite_doi",
                     "range_key": "score",
                     "rec_attribute": "rec_dois"}
+
 REC_TYPES = set(('classic', 'expert'))
-DATASETS = ['wos', 'aminer', 'ai2']
+DATASETS = ['wos', 'aminer', 'ai2', 'arxiv']
+
 
 class Table(object):
     """
@@ -18,10 +20,6 @@ class Table(object):
     """
     def __init__(self, connection, table_name):
         self.table_name = table_name
-        self.hash_key = TABLE_DEFINITION["hash_key"]
-        self.range_key = TABLE_DEFINITION["range_key"]
-        self.rec_attribute = TABLE_DEFINITION["rec_attribute"]
-        self.rec_types = REC_TYPES
         self.connection = connection
         self.table = None
 
@@ -29,27 +27,6 @@ class Table(object):
         if not self.table:
             self.table = self.connection.Table(self.table_name)
         return self.table
-
-    def create(self, read=5, write=5):
-        self.table = self.connection.create_table(
-            TableName=self.table_name,
-            KeySchema=[
-                {"AttributeName": self.hash_key,
-                 "KeyType": "HASH"},
-                {"AttributeName": self.range_key,
-                 "KeyType": "RANGE"}],
-            AttributeDefinitions=[
-                {"AttributeName": self.hash_key,
-                 "AttributeType": "S"},
-                {"AttributeName": self.range_key,
-                 "AttributeType": "N"},
-                #{"AttributeName": self.rec_attribute,
-                # "AttributeType": "SS"}
-                ],
-            ProvisionedThroughput={
-                "ReadCapacityUnits": read,
-                "WriteCapacityUnits": write})
-        self.table.meta.client.get_waiter('table_exists').wait(TableName=self.table_name)
 
     def delete(self):
         try:
@@ -75,3 +52,56 @@ class Table(object):
                                                                                'WriteCapacityUnits': write},
                                                         TableName=self.table_name)
 
+
+class Metadata(Table):
+    def __init__(self, connection, table_name):
+        if not table_name.endswith("_md"):
+            raise ValueError("table_name must in in _md")
+        super().__init__(connection, table_name)
+        self.hash_key = "paper_id"
+
+    def create(self, read=5, write=5):
+        self.table = self.dynamodb.create_table(
+            TableName=self.table_name,
+            KeySchema=[{
+                'AttributeName': self.hash_key,
+                'KeyType': "HASH"
+            }],
+            AttributeDefinitions=[{
+                'AttributeName': self.hash_key,
+                'AttributeType': 'S'
+            }],
+            ProvisionedThroughput=[{
+                'ReadCapacityUnits': read,
+                'WriteCapacityUnits': write
+            }]
+        )
+        self.table.meta.client.get_waiter('table_exists').wait(TableName=self.table_name)
+
+
+class Recommendation(Table):
+    def __init__(self, connection, table_name):
+        super().__init__(connection, table_name)
+        self.hash_key = TABLE_DEFINITION["hash_key"]
+        self.range_key = TABLE_DEFINITION["range_key"]
+        self.rec_attribute = TABLE_DEFINITION["rec_attribute"]
+        self.rec_types = REC_TYPES
+
+    def create(self, read=5, write=5):
+        self.table = self.connection.create_table(
+            TableName=self.table_name,
+            KeySchema=[
+                {"AttributeName": self.hash_key,
+                 "KeyType": "HASH"},
+                {"AttributeName": self.range_key,
+                 "KeyType": "RANGE"}],
+            AttributeDefinitions=[
+                {"AttributeName": self.hash_key,
+                 "AttributeType": "S"},
+                {"AttributeName": self.range_key,
+                 "AttributeType": "N"},
+            ],
+            ProvisionedThroughput={
+                "ReadCapacityUnits": read,
+                "WriteCapacityUnits": write})
+        self.table.meta.client.get_waiter('table_exists').wait(TableName=self.table_name)
