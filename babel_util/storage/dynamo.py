@@ -6,7 +6,7 @@ TABLE_DEFINITION = {"hash_key": "composite_doi",
                     "rec_attribute": "rec_dois"}
 
 REC_TYPES = set(('classic', 'expert'))
-DATASETS = ['wos', 'aminer', 'ai2', 'arxiv']
+DATASETS = ['wos', 'aminer', 'ai2', 'arxiv', 'pubmed']
 
 
 class Table(object):
