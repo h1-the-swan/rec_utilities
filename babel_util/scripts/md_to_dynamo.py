@@ -14,6 +14,7 @@ if __name__ == "__main__":
     parser.add_argument('--benchmark-freq', default=100000, type=int)
     parser.add_argument('--delimiter', '-d', default='\t')
     parser.add_argument("--region", help="Region to connect to", default="us-east-1")
+    parser.add_argument("--include", help="Comma separated list of additional field to include")
     parser.add_argument("-c", "--create", help="create table in database", action="store_true")
     parser.add_argument("-f", "--flush", help="flush database.", action="store_true")
     parser.add_argument("-n", "--dryrun", help="Process data, but don't insert into DB", action="store_true")
@@ -26,6 +27,11 @@ if __name__ == "__main__":
         client = boto3.resource('dynamodb', endpoint_url="http://localhost:8000")
     else:
         client = boto3.resource('dynamodb')
+
+    include_fields = set(REQUIRED_KEYS)
+
+    if args.include:
+        include_fields.add(map(str.strip, args.include.split(",")))
 
     t = Metadata(client, table_name)
 
@@ -44,11 +50,12 @@ if __name__ == "__main__":
         with t.get_batch_put_context() as batch:
             reader = csv.DictReader(ifs, delimiter=args.delimiter)
             for row in reader:
-                if not REQUIRED_KEYS.issubset(row.keys()):
+                new_row = {k:v for k,v in row.items() if k in include_fields}
+                if not REQUIRED_KEYS.issubset(new_row.keys()):
                     print(row)
                     raise KeyError("Not all required keys present")
                 if not args.dryrun:
-                    batch.put_item(Item=row)
+                    batch.put_item(Item=new_row)
                 b.increment()
 
     if not args.dryrun:
