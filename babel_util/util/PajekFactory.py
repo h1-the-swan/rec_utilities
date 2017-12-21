@@ -7,17 +7,27 @@ from tempfile import TemporaryFile
 class PajekFactory(object):
     """Factory to build a Pajek file"""
 
-    def __init__(self, edge_stream=None, node_stream=None, temp_dir=None):
+    def __init__(self, 
+                    edge_stream=None, 
+                    node_stream=None, 
+                    temp_dir=None, 
+                    vertices_label='Vertices', 
+                    edges_label='Arcs'):
         """Build a Pajek Writer.
 
         Args:
             edge_stream: If provided, a stream that edges will be written to. Otherwise a temporary file is used.
             node_stream: If provided, a stream that nodes will be written to. Otherwise a temporary file is used.
             temp_dir: If provided, the directory to write temporary files to.
+            vertices_label: label to use for the Vertices section of the output file. Default: 'Vertices'
+            edges_label: label to use for the Edges section fo the output file. Note: directed graphs should use 'Arcs'. Undirected graphs should use 'Edges'. Default: 'Arcs'
         """
         self.ids = AutoID(first_id=1)
         self.edge_stream = edge_stream
         self.node_stream = node_stream
+
+        self.vertices_label = vertices_label
+        self.edges_label = edges_label
 
         if not self.edge_stream:
             self.edge_stream = TemporaryFile("w+", dir=temp_dir)
@@ -54,14 +64,17 @@ class PajekFactory(object):
         self.edge_stream.write("%s %s\n" % (sid, did))
         self.edge_count += 1
 
-    def write(self, output):
+    def write(self, output, vertices_label=None, edges_label=None):
         """Write pajek file to output"""
         self.edge_stream.seek(0)
         self.node_stream.seek(0)
 
-        output.write("*vertices {}\n".format(len(self.ids)))
+        vertices_label = vertices_label or self.vertices_label
+        edges_label = edges_label or self.edges_label
+
+        output.write("*{} {}\n".format(vertices_label, len(self.ids)))
         copyfileobj(self.node_stream, output)
-        output.write("*edges {}\n".format(self.edge_count))
+        output.write("*{} {}\n".format(edges_label, self.edge_count))
         copyfileobj(self.edge_stream, output)
 
     def __str__(self):
